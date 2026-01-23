@@ -2,6 +2,14 @@
 
 ### ZION is a reconnaissance and monitoring tool designed for SOC Analysts and Blue Teams. It consolidates intelligence from multiple high-fidelity threat sources and delivers a unified risk verdict for digital assets, removing the need for fragmented manual analysis.
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/mym0us3r/zion/blob/main/LICENSE)
+![Python](https://img.shields.io/badge/python-3.9%2B-brightgreen.svg)
+![FastAPI](https://img.shields.io/badge/framework-FastAPI-009688.svg)
+
+> "There is no anonymity on the attack surface. Only delays :)"
+
+**ZION** is a robust **External Attack Surface Management (EASM)** platform that consolidates intelligence from multiple sources to provide a real-time, panoramic view of digital assets and global threats.
+
 ---
 
 ## Key Features
@@ -17,20 +25,30 @@
   - AbuseIPDB  
   - VirusTotal  
   - OTX AlienVault  
+  - Ransomware Live  
+  - SHODAN  
+  - CENSYS  
 
 - **Real-Time Dashboards**  
   Interactive UI with geolocated asset visualization using Leaflet.js.
 
 - **Security News Feed**  
-  Integrated threat intelligence from:
+  Real-time RSS feed consumption from:
   - The Hacker News  
-  - CISO Advisor  
+  - CISO Advisor Brazil  
 
-- **Automated Heuristics**  
-  Dynamic asset classification:
-  - Clean  
-  - Suspicious  
-  - Malicious  
+### 1. Threat Telemetry Dashboard
+Centralized interface displaying:
+* **Identity Details**: Organization/ISP, IP, and location via IPInfo.
+* **Threat Scores**: Aggregated AbuseIPDB (Score %) and VirusTotal (Hits).
+* **OTX Pulses**: Triple sum of IoCs via AlienVault.
+* **Final Verdict**: Intelligent decision algorithm (Clean, Suspicious, Malicious).
+
+### 2. Ransomware Live Monitor
+Native integration with `ransomware.live` tracking:
+* Number of active ransomware groups.
+* Victims recorded in the current year (2026).
+* Total historical victims with persistent caching for high availability.
 
 ---
 
