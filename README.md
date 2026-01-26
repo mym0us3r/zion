@@ -221,6 +221,10 @@ sudo systemctl restart zion
 
 --- 
 
+*The project is still in its early stages, but it brings a powerful concept to the table. When you search for an address, it doesn't just look up the target, it performs a triple-check, across the Domain, sub-domain (as www - the most common entry point), and IP. While a more aggressive reconnaissance feature to scan entire infrastructures is on the roadmap, the primary focus right now is to empower SOC teams. ZION provides a broader perspective that is essential for handling alerts, threat hunting, or executing incident responses.*
+
+---
+
 ## Disclaimer & Purpose
 
 **ZION** was developed to **streamline SOC operations**, drastically reducing manual reconnaissance time by consolidating fragmented intelligence into a single, actionable dashboard. 
