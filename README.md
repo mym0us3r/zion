@@ -10,7 +10,7 @@
 
 **ZION** is a robust **External Attack Surface Management (EASM)** platform that consolidates intelligence from multiple sources to provide a real-time, panoramic view of digital assets and global threats.
 
-## 3. Interface & Case Studies
+## Interface & Case Studies
 
 This section demonstrates ZION's capability to map diverse digital asset profiles and infrastructure types.
 
