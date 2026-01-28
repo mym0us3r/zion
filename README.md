@@ -155,16 +155,24 @@ IPINFO_TOKEN=your_ipinfo_token
 ```
 ZION
 ├── app
-│   ├── core
-│   │   ├── abuse_client.py    # AbuseIPDB integration
-│   │   ├── analyzer.py        # Recursive analysis engine
-│   │   ├── otx_client.py      # OTX AlienVault integration
-│   │   └── vt_client.py       # VirusTotal integration
-│   ├── main.py                # FastAPI entrypoint
-│   ├── static                 # CSS and JavaScript assets
-│   └── templates              # HTML dashboard templates
-├── .env                       # API secrets
-└── requirements.txt           # Python dependencies
+│   ├── config.py                # Global configurations and environment variable management
+│   ├── core                     # Search engines and Threat Intelligence integrations
+│   │   ├── abuse_client.py      # AbuseIPDB API integration
+│   │   ├── analyzer.py          # Central recursive analysis engine
+│   │   ├── censys_client.py     # Censys integration (Infrastructure discovery)
+│   │   ├── __init__.py          # Core package initializer
+│   │   ├── otx_client.py        # AlienVault OTX integration
+│   │   ├── phishstats_client.py # Real-time Phishing monitoring
+│   │   ├── ransomware_client.py # Ransomware threat actors intelligence
+│   │   ├── shodan_client.py     # Shodan integration (Exposed devices search)
+│   │   └── vt_client.py         # VirusTotal API integration
+│   ├── __init__.py
+│   ├── main.py                  # FastAPI entrypoint (Backend and Routing)
+│   ├── static                   # Frontend assets (CSS, JS, Images)
+│   └── templates
+│       └── dashboard.html       # Web-based UI Dashboard
+├── requirements.txt             # Python project dependencies
+└── venv                         # Local virtual environment
 ```
 
 ---
