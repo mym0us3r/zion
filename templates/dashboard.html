@@ -3,134 +3,451 @@
 <head>
     <meta charset="UTF-8">
     <title>ZION - EXTERNAL ATTACK SURFACE v1.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #00050a; color: #00f2ff; font-family: 'Courier New', monospace; margin: 0; padding: 10px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        .zion-card { background: #010c17; border: 1px solid #061f3d; display: flex; flex-direction: column; min-height: 0; }
-        .panel-header { font-size: 10px; color: #3b82f6; font-weight: bold; border-bottom: 1px solid #061f3d; padding: 4px 10px; background: rgba(6, 31, 61, 0.3); text-transform: uppercase; }
+        :root {
+            --bg-0: #0b111b;
+            --bg-1: #121a27;
+            --panel: #151f32;
+            --panel-2: #111a2b;
+            --border: #1e293b;
+            --accent: #38bdf8;
+            --accent-2: #22d3ee;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            background: radial-gradient(1200px 600px at 80% -20%, rgba(56, 189, 248, 0.08), transparent 60%),
+                        radial-gradient(900px 600px at -10% 20%, rgba(34, 211, 238, 0.05), transparent 60%),
+                        var(--bg-0);
+            color: var(--text);
+            font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 12px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .zion-card {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 20, 36, 0.95));
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.35);
+        }
+
+        .panel-header {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            padding: 6px 10px;
+            background: rgba(2, 6, 23, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .bg-panel { background: var(--panel) !important; }
+        .bg-panel-2 { background: var(--panel-2) !important; }
+        .border-panel { border-color: var(--border) !important; }
+        .text-main { color: var(--text) !important; }
+        .text-muted { color: var(--muted) !important; }
+        .text-accent { color: var(--accent) !important; }
+        .header-bar {
+            width: 100%;
+            border-radius: 12px;
+            padding: 8px 12px 12px;
+            background: linear-gradient(120deg, rgba(14, 165, 233, 0.15), rgba(34, 211, 238, 0.06) 55%, rgba(15, 23, 42, 0));
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px rgba(2, 6, 23, 0.3);
+        }
 
         .feed-container { overflow: hidden; flex-grow: 1; }
-        .feed-item { display: block; font-size: 10px; color: #00ff88; margin-bottom: 8px; text-decoration: none; line-height: 1.3; }
-        .feed-item::before { content: "▪ "; color: #3b82f6; }
-        .feed-item:hover { color: #fff; text-shadow: 0 0 5px #00f2ff; }
+        .feed-item { display: block; font-size: 10px; color: #86efac; margin-bottom: 8px; text-decoration: none; line-height: 1.3; }
+        .feed-item::before { content: "› "; color: var(--accent); }
+        .feed-item:hover { color: #ffffff; text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
 
-        #map { flex-grow: 1; background: #000b1a; border: 1px solid #061f3d; width: 100%; height: 100%; }
+        #map {
+            flex-grow: 1;
+            background: #0b1220;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            width: 100%;
+            height: 100%;
+        }
 
-        .leaflet-popup-content-wrapper { background: #010c17 !important; color: #00f2ff !important; border: 1px solid #00f2ff !important; border-radius: 0px !important; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
-        .leaflet-popup-tip { background: #00f2ff !important; }
-        .popup-label { color: #3b82f6; font-weight: bold; text-transform: uppercase; margin-right: 5px; }
-        .popup-value { color: #ffffff; font-weight: bold; }
+        .leaflet-popup-content-wrapper {
+            background: #0b1220 !important;
+            color: var(--text) !important;
+            border: 1px solid var(--accent) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 12px 24px rgba(2, 6, 23, 0.45);
+        }
+        .leaflet-popup-tip { background: var(--accent) !important; }
+        .popup-label { color: var(--muted); font-weight: 700; text-transform: uppercase; margin-right: 5px; }
+        .popup-value { color: #ffffff; font-weight: 700; }
 
-        .terminal-container { position: relative; height: 110px; background: #000; border-top: 1px solid #061f3d; padding: 10px; }
-        #terminal_logs { font-size: 11px; color: #00ff00; }
-        .terminal-motto { position: absolute; bottom: 10px; width: 100%; text-align: center; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: bold; letter-spacing: 1px; pointer-events: none; }
+        .terminal-container {
+            position: relative;
+            height: 110px;
+            background: linear-gradient(180deg, #05070b, #0b1220);
+            border-top: 1px solid var(--border);
+            padding: 10px;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        #terminal_logs { font-size: 11px; color: #86efac; font-family: 'Space Mono', 'Courier New', monospace; }
+        .terminal-motto {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: rgba(226, 232, 240, 0.85);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            pointer-events: none;
+        }
 
-        .engine-btn { width: 100%; text-align: left; padding: 4px 8px; border: 1px solid #061f3d; font-size: 9px; margin-bottom: 2px; color: #00f2ff; text-transform: uppercase; background: rgba(0,242,255,0.02); cursor: pointer; }
-        .engine-btn:hover { background: rgba(0,242,255,0.1); border-color: #00f2ff; }
-        .text-clean { color: #22c55e !important; }
-        .text-suspicious { color: #f97316 !important; }
-        .text-malicious { color: #ef4444 !important; }
+        .engine-btn {
+            width: 100%;
+            text-align: left;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            font-size: 11px;
+            margin-bottom: 4px;
+            color: var(--text);
+            text-transform: uppercase;
+            background: rgba(2, 6, 23, 0.5);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .engine-btn:hover { background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.5); }
+        .engine-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #475569;
+            box-shadow: 0 0 8px rgba(71, 85, 105, 0.6);
+            flex: 0 0 auto;
+        }
+        .engine-status.on { background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
+        .engine-status.off { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.7); }
+        .engine-status.idle { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); }
+
+        .text-clean { color: var(--success) !important; }
+        .text-suspicious { color: var(--warning) !important; }
+        .text-malicious { color: var(--danger) !important; }
         .link-header { cursor: pointer; transition: color 0.2s; }
-        .link-header:hover { color: #00f2ff !important; }
+        .link-header:hover { color: var(--accent) !important; }
+        .control-select {
+            background: rgba(2, 6, 23, 0.5);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            outline: none;
+        }
+        .lang-dropdown {
+            position: relative;
+        }
+        .lang-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(2, 6, 23, 0.5);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .lang-menu {
+            position: absolute;
+            right: 0;
+            top: 36px;
+            min-width: 220px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.35);
+            padding: 6px;
+            display: none;
+            z-index: 10;
+        }
+        .lang-menu.open { display: block; }
+        .lang-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .lang-item:hover { background: rgba(56, 189, 248, 0.12); }
+        .flag {
+            width: 18px;
+            height: 12px;
+            display: inline-block;
+        }
+        .public-ip {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 10px;
+            min-width: 220px;
+            text-align: right;
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.35);
+        }
+        .public-ip .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .public-ip .value { font-size: 13px; font-weight: 700; color: var(--text); }
+        .status-ok { color: var(--success); }
+        .status-bad { color: var(--danger); }
+        .status-warn { color: var(--warning); }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid var(--border);
+            background: rgba(2, 6, 23, 0.35);
+        }
+        .chip.clean { color: var(--success); border-color: rgba(22, 163, 74, 0.4); }
+        .chip.suspicious { color: var(--warning); border-color: rgba(217, 119, 6, 0.4); }
+        .chip.malicious { color: var(--danger); border-color: rgba(220, 38, 38, 0.4); }
+        .telemetry-accent {
+            border-left: 3px solid var(--accent);
+        }
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(15, 23, 42, 0.2);
+            border-top-color: rgba(15, 23, 42, 0.8);
+            border-radius: 999px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .reveal {
+            animation: rise 0.4s ease-out both;
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-    <header class="flex flex-col items-center mb-2 shrink-0">
-        <h1 class="text-lg font-bold tracking-[0.6em] text-white uppercase">Zion - External Attack Surface Monitor</h1>
-        <div class="flex gap-2 mt-1">
-            <input type="text" id="target_input" placeholder="DOMAIN OR IP" class="bg-black border border-[#061f3d] px-4 py-1 w-[350px] text-[#00f2ff] text-center outline-none font-bold focus:border-cyan-400">
-            <button onclick="executeAnalysis()" class="bg-[#00f2ff] text-black font-black px-6 py-1 uppercase text-xs hover:bg-white transition-all">Analyze</button>
+    <div class="public-ip zion-card" style="position:absolute;">
+        <div class="label" data-i18n="backend_status_label">Backend</div>
+        <div id="backend_status" class="value status-bad">OFFLINE</div>
+        <div class="label mt-1" data-i18n="latency_label">Latency</div>
+        <div id="latency_ms" class="value">---</div>
+        <div class="label mt-1" data-i18n="feeds_updated_label">Feeds Updated</div>
+        <div id="feeds_updated" class="value">---</div>
+    </div>
+
+    <header class="flex flex-col items-center mb-2 shrink-0 header-bar">
+        <div class="flex items-center gap-3">
+            <h1 class="text-lg font-bold tracking-[0.35em] text-main uppercase" data-i18n="app_title">Zion - External Attack Surface Monitor</h1>
+            <span class="text-[11px] uppercase tracking-widest text-muted border border-panel px-2 py-0.5 rounded-full">v1.0</span>
+        </div>
+        <p class="text-[12px] text-muted mt-1" data-i18n="subtitle">Recon & threat telemetry for domains, subdomains, and IPs.</p>
+        <div class="flex flex-wrap items-center gap-2 mt-2 justify-center">
+            <input type="text" id="target_input" placeholder="DOMAIN OR IP" class="bg-panel border border-panel px-4 py-2 w-[360px] text-main text-center outline-none font-semibold focus:border-cyan-400 rounded-md tracking-wide">
+            <button id="analyze_btn" onclick="executeAnalysis()" class="bg-cyan-400 text-slate-950 font-bold px-6 py-2 uppercase text-[11px] hover:bg-cyan-200 transition-all rounded-md" data-i18n="analyze_btn">Analyze</button>
+            <div class="flex items-center gap-2">
+                <label class="text-[11px] uppercase tracking-widest text-muted" data-i18n="language_label">Language</label>
+                <div class="lang-dropdown">
+                    <button id="lang_toggle" class="lang-button" type="button">
+                        <span id="lang_flag" class="flag" aria-hidden="true">
+                            <svg viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="18" height="12" fill="#009B3A"/>
+                                <polygon points="9,1 17,6 9,11 1,6" fill="#FFDF00"/>
+                                <circle cx="9" cy="6" r="3" fill="#002776"/>
+                            </svg>
+                        </span>
+                        <span id="lang_label">Português (Brasil)</span>
+                    </button>
+                    <div id="lang_menu" class="lang-menu">
+                        <button class="lang-item" data-lang="pt-BR" type="button">
+                            <span class="flag" aria-hidden="true">
+                                <svg viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="18" height="12" fill="#009B3A"/>
+                                    <polygon points="9,1 17,6 9,11 1,6" fill="#FFDF00"/>
+                                    <circle cx="9" cy="6" r="3" fill="#002776"/>
+                                </svg>
+                            </span>
+                            Português (Brasil)
+                        </button>
+                        <button class="lang-item" data-lang="en-CA" type="button">
+                            <span class="flag" aria-hidden="true">
+                                <svg viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="18" height="12" fill="#FFFFFF"/>
+                                    <rect width="4" height="12" fill="#D80621"/>
+                                    <rect x="14" width="4" height="12" fill="#D80621"/>
+                                    <polygon points="9,2.2 9.7,4.1 11.6,4 10.2,5.2 10.7,7.1 9,6.1 7.3,7.1 7.8,5.2 6.4,4 8.3,4.1" fill="#D80621"/>
+                                </svg>
+                            </span>
+                            English (Canada)
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
     <div class="grid grid-cols-12 gap-2 flex-grow min-h-0">
         <div class="col-span-2 flex flex-col gap-2 min-h-0">
-            <div class="zion-card">
-                <div class="panel-header">External Engines</div>
+            <div class="zion-card reveal">
+                <div class="panel-header" data-i18n="external_engines">External Engines</div>
                 <div class="p-2" id="engine_list">
-                    <button class="engine-btn" data-url="https://www.abuseipdb.com/check/">1. ABUSEIPDB ➔</button>
-                    <button class="engine-btn" data-url="https://www.virustotal.com/gui/search/">2. VIRUSTOTAL ➔</button>
-                    <button class="engine-btn" data-url="https://otx.alienvault.com/indicator/">3. OTX ALIENVAULT ➔</button>
-                    <button class="engine-btn" data-url="https://www.shodan.io/search?query=">4. SHODAN ➔</button>
-                    <button class="engine-btn" data-url="https://search.censys.io/">5. CENSYS ➔</button>
+                    <button class="engine-btn" data-engine="abuseipdb" data-url="https://www.abuseipdb.com/check/">
+                        <span>1. ABUSEIPDB</span><span id="status_abuseipdb" class="engine-status off"></span>
+                    </button>
+                    <button class="engine-btn" data-engine="virustotal" data-url="https://www.virustotal.com/gui/search/">
+                        <span>2. VIRUSTOTAL</span><span id="status_virustotal" class="engine-status off"></span>
+                    </button>
+                    <button class="engine-btn" data-engine="otx" data-url="https://otx.alienvault.com/indicator/">
+                        <span>3. OTX ALIENVAULT</span><span id="status_otx" class="engine-status off"></span>
+                    </button>
+                    <button class="engine-btn" data-engine="shodan" data-url="https://www.shodan.io/search?query=">
+                        <span>4. SHODAN</span><span id="status_shodan" class="engine-status idle"></span>
+                    </button>
+                    <button class="engine-btn" data-engine="censys" data-url="https://platform.censys.io/">
+                        <span>5. CENSYS</span><span id="status_censys" class="engine-status idle"></span>
+                    </button>
                 </div>
             </div>
 
-            <div class="zion-card flex-grow overflow-hidden">
-                <div class="panel-header">Security Feeds (Live)</div>
-                <div class="p-2 flex flex-col justify-between flex-grow overflow-hidden">
-                    <div class="flex flex-col flex-grow mb-2">
-                        <p class="text-[9px] text-blue-500 font-bold uppercase mb-2 border-b border-blue-900/40">The Hacker News</p>
+            <div class="zion-card flex-grow overflow-hidden reveal">
+                <div class="panel-header" data-i18n="security_feeds">Security Feeds (Live)</div>
+                <div class="p-2 flex flex-col gap-3 flex-grow overflow-y-auto">
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-muted font-bold uppercase mb-2 border-b border-panel" data-i18n="feed_thn">The Hacker News</p>
                         <div id="feed_thn" class="feed-container"></div>
                     </div>
-                    <div class="flex flex-col flex-grow">
-                        <p class="text-[9px] text-blue-500 font-bold uppercase mb-2 border-b border-blue-900/40">CISO Advisor Brazil</p>
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-muted font-bold uppercase mb-2 border-b border-panel" data-i18n="feed_ciso">CISO Advisor Brazil</p>
                         <div id="feed_ciso" class="feed-container"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-muted font-bold uppercase mb-2 border-b border-panel" data-i18n="feed_isc">SANS ISC Diary</p>
+                        <div id="feed_isc" class="feed-container"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-muted font-bold uppercase mb-2 border-b border-panel" data-i18n="feed_msisac">MS-ISAC Advisories</p>
+                        <div id="feed_msisac" class="feed-container"></div>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-muted font-bold uppercase mb-2 border-b border-panel" data-i18n="feed_msrc">Microsoft SUG</p>
+                        <div id="feed_msrc" class="feed-container"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="zion-card p-2 border !border-purple-900 bg-[#0a0014] shrink-0">
-                <div class="panel-header !bg-transparent !border-none !p-0 !text-purple-400 mb-1">
-                    <a href="https://www.ransomware.live/stats" target="_blank" class="link-header">Ransomware Monitor ➔</a>
+            <div class="zion-card p-2 border border-panel bg-panel shrink-0 reveal">
+                <div class="panel-header !bg-transparent !border-none !p-0 text-muted mb-1">
+                    <a href="https://www.ransomware.live/stats" target="_blank" class="link-header" data-i18n="ransomware_monitor">Ransomware Monitor ➔</a>
                 </div>
                 <div class="grid grid-cols-3 gap-1 text-center font-bold">
-                    <div><p class="text-[7px] text-gray-500 uppercase">Groups</p><p id="rans_groups" class="text-[9px] text-green-400">313</p></div>
-                    <div><p class="text-[7px] text-gray-500 uppercase">2026</p><p id="rans_year" class="text-[9px] text-orange-400">481</p></div>
-                    <div><p class="text-[7px] text-gray-500 uppercase">Total</p><p id="rans_total" class="text-[9px] text-red-500">25.126</p></div>
+                    <div><p class="text-[9px] text-muted uppercase" data-i18n="label_groups">Groups</p><p id="rans_groups" class="text-[10px] text-emerald-500">313</p></div>
+                    <div><p class="text-[9px] text-muted uppercase" data-i18n="label_year">2026</p><p id="rans_year" class="text-[10px] text-amber-500">481</p></div>
+                    <div><p class="text-[9px] text-muted uppercase" data-i18n="label_total">Total</p><p id="rans_total" class="text-[10px] text-rose-500">25.126</p></div>
                 </div>
             </div>
         </div>
 
         <div class="col-span-7 flex flex-col gap-2 min-h-0">
-            <div class="flex-grow zion-card"><div id="map"></div></div>
-            <div class="zion-card shrink-0">
-                <div class="panel-header">Terminal Search</div>
+            <div class="flex-grow zion-card reveal"><div id="map"></div></div>
+            <div class="zion-card shrink-0 reveal">
+                <div class="panel-header" data-i18n="terminal_search">Terminal Search</div>
                 <div class="terminal-container">
                     <div id="terminal_logs">> ZION - External Attack Surface Monitor by m0us3r.</div>
-                    <div class="terminal-motto">THERE IS NO ANONYMITY ON THE ATTACK SURFACE, ONLY DELAYS!</div>
+                    <div class="terminal-motto" data-i18n="motto">THERE IS NO ANONYMITY ON THE ATTACK SURFACE, ONLY DELAYS!</div>
                 </div>
             </div>
         </div>
 
         <div class="col-span-3 flex flex-col gap-2 min-h-0">
-            <div class="zion-card p-2 shrink-0">
-                <div class="panel-header mb-1">Identity Details (IPINFO)</div>
-                <div class="bg-black/40 p-2 border border-[#061f3d]">
-                    <p class="text-[7px] text-blue-500 uppercase font-bold">Organization</p>
-                    <p id="ui_isp" class="text-[10px] text-white font-bold truncate uppercase">---</p>
-                    <div class="grid grid-cols-2 gap-2 mt-1">
-                        <div><p class="text-[7px] text-blue-500 uppercase font-bold">IP (INTEL)</p><p id="ui_ip" class="text-[10px] text-cyan-400 font-bold">---</p></div>
-                        <div><p class="text-[7px] text-blue-500 uppercase font-bold">Country</p><p id="ui_country" class="text-[10px] text-white font-bold uppercase">---</p></div>
+            <div class="zion-card p-2 shrink-0 reveal">
+                <div class="panel-header mb-1" data-i18n="identity_details">Identity Details (IPINFO)</div>
+                <div class="bg-panel-2 p-2 border border-panel rounded-md">
+                    <p class="text-[9px] text-muted uppercase font-bold" data-i18n="label_org">Organization</p>
+                    <p id="ui_isp" class="text-[11px] text-main font-bold truncate uppercase">---</p>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <div><p class="text-[9px] text-muted uppercase font-bold" data-i18n="label_ipintel">IP (INTEL)</p><p id="ui_ip" class="text-[11px] text-accent font-bold">---</p></div>
+                        <div><p class="text-[9px] text-muted uppercase font-bold" data-i18n="label_country">Country</p><p id="ui_country" class="text-[11px] text-main font-bold uppercase">---</p></div>
+                        <div><p class="text-[9px] text-muted uppercase font-bold" data-i18n="label_city">City</p><p id="ui_city" class="text-[11px] text-main font-bold uppercase">---</p></div>
+                        <div><p class="text-[9px] text-muted uppercase font-bold" data-i18n="label_asn">ASN</p><p id="ui_asn" class="text-[11px] text-main font-bold uppercase">---</p></div>
+                        <div><p class="text-[9px] text-muted uppercase font-bold" data-i18n="label_coords">Coords</p><p id="ui_coords" class="text-[11px] text-main font-bold uppercase">---</p></div>
                     </div>
                 </div>
             </div>
 
-            <div class="zion-card flex-grow flex flex-col">
-                <div class="panel-header">Threat Telemetry</div>
+            <div class="zion-card flex-grow flex flex-col telemetry-accent reveal">
+                <div class="panel-header" data-i18n="threat_telemetry">Threat Telemetry</div>
                 <div class="flex flex-col flex-grow">
-                    <div class="grid grid-cols-2 border-b border-[#061f3d]/50 flex-grow text-center items-center">
-                        <div><p id="ui_abuse" class="text-3xl font-black">0%</p><p class="text-[8px] text-blue-500">Abuse Score</p></div>
-                        <div><p id="ui_vt" class="text-3xl font-black">0</p><p class="text-[8px] text-blue-500">VT Hits</p></div>
+                    <div class="grid grid-cols-2 border-b border-panel flex-grow text-center items-center">
+                        <div><p id="ui_abuse" class="text-3xl font-black">0%</p><p class="text-[10px] text-muted" data-i18n="label_abuse">Abuse Score</p></div>
+                        <div><p id="ui_vt" class="text-3xl font-black">0</p><p class="text-[10px] text-muted" data-i18n="label_vt">VT Hits</p></div>
                     </div>
                     <div class="flex flex-col items-center justify-center flex-grow">
-                        <p id="ui_pulses" class="text-6xl font-black text-white">0</p>
-                        <p class="text-[8px] text-blue-500 uppercase">OTX Pulses (DOM+WWW+IP)</p>
+                        <p id="ui_pulses" class="text-6xl font-black text-main">0</p>
+                        <p class="text-[10px] text-muted uppercase" data-i18n="label_otx">OTX Pulses (DOM+WWW+IP)</p>
                     </div>
-                    <div class="flex flex-col items-center justify-center flex-grow bg-black/40 border-t border-[#061f3d]">
+                    <div class="flex flex-col items-center justify-center flex-grow bg-panel-2 border-t border-panel">
                         <p id="ui_verdict" class="text-4xl font-black uppercase tracking-tighter">---</p>
+                        <span id="verdict_chip" class="chip mt-1">---</span>
+                        <p id="verdict_reason" class="text-[10px] text-muted mt-1 text-center">---</p>
                     </div>
                 </div>
             </div>
 
-            <div class="zion-card p-2 border !border-red-900 bg-[#0d0000] shrink-0 min-h-[140px]">
-                <div class="panel-header !text-red-500 !bg-transparent !border-none !p-0 mb-1">
-                    <a href="https://phishstats.info/search" target="_blank" class="link-header">Phishing BR Monitor ➔</a>
+            <div class="zion-card p-2 border border-panel bg-panel shrink-0 min-h-[140px] reveal">
+                <div class="panel-header !bg-transparent !border-none !p-0 mb-1 text-muted">
+                    <a href="https://phishstats.info/search" target="_blank" class="link-header" data-i18n="phishing_monitor">Phishing BR Monitor ➔</a>
                 </div>
-                <div id="phish_content" class="text-[8px] space-y-1 font-mono"></div>
+                <div id="phish_content" class="text-[10px] space-y-1 font-mono"></div>
             </div>
         </div>
     </div>
@@ -146,30 +463,171 @@
             try { return regionNames.of(code.toUpperCase()).toUpperCase(); } catch (e) { return code.toUpperCase(); }
         }
 
+        const translations = {
+            "pt-BR": {
+                app_title: "Zion - Monitor de Superficie Externa",
+                subtitle: "Recon e telemetria de ameaças para domínios, subdomínios e IPs.",
+                analyze_btn: "Analisar",
+                language_label: "Idioma",
+                external_engines: "Motores Externos",
+                security_feeds: "Feeds de Segurança (Ao vivo)",
+                feed_thn: "The Hacker News",
+                feed_ciso: "CISO Advisor Brazil",
+                feed_isc: "SANS ISC Diário",
+                feed_msisac: "MS-ISAC Alertas",
+                feed_msrc: "Microsoft SUG",
+                ransomware_monitor: "Monitor de Ransomware ➔",
+                label_groups: "Grupos",
+                label_year: "2026",
+                label_total: "Total",
+                terminal_search: "Busca no Terminal",
+                motto: "NA SUPERFÍCIE DE ATAQUE NÃO HÁ ANONIMATO, APENAS ATRASOS!",
+                identity_details: "Identidade (IPINFO)",
+                label_org: "Organização",
+                label_ipintel: "IP (INTEL)",
+                label_country: "País",
+                label_city: "Cidade",
+                label_asn: "ASN",
+                label_coords: "Coords",
+                threat_telemetry: "Telemetria de Ameaças",
+                label_abuse: "Score de Abuso",
+                label_vt: "Detecções VT",
+                label_otx: "OTX Pulses (DOM+WWW+IP)",
+                phishing_monitor: "Monitor de Phishing BR ➔",
+                backend_status_label: "Backend",
+                latency_label: "Latência",
+                feeds_updated_label: "Feeds Atualizados",
+                backend_online: "ONLINE",
+                backend_offline: "OFFLINE",
+                backend_checking: "CHECANDO"
+            },
+            "en-CA": {
+                app_title: "Zion - External Attack Surface Monitor",
+                subtitle: "Recon & threat telemetry for domains, subdomains, and IPs.",
+                analyze_btn: "Analyze",
+                language_label: "Language",
+                external_engines: "External Engines",
+                security_feeds: "Security Feeds (Live)",
+                feed_thn: "The Hacker News",
+                feed_ciso: "CISO Advisor Brazil",
+                feed_isc: "SANS ISC Diary",
+                feed_msisac: "MS-ISAC Advisories",
+                feed_msrc: "Microsoft SUG",
+                ransomware_monitor: "Ransomware Monitor ➔",
+                label_groups: "Groups",
+                label_year: "2026",
+                label_total: "Total",
+                terminal_search: "Terminal Search",
+                motto: "THERE IS NO ANONYMITY ON THE ATTACK SURFACE, ONLY DELAYS!",
+                identity_details: "Identity Details (IPINFO)",
+                label_org: "Organization",
+                label_ipintel: "IP (INTEL)",
+                label_country: "Country",
+                label_city: "City",
+                label_asn: "ASN",
+                label_coords: "Coords",
+                threat_telemetry: "Threat Telemetry",
+                label_abuse: "Abuse Score",
+                label_vt: "VT Hits",
+                label_otx: "OTX Pulses (DOM+WWW+IP)",
+                phishing_monitor: "Phishing BR Monitor ➔",
+                backend_status_label: "Backend",
+                latency_label: "Latency",
+                feeds_updated_label: "Feeds Updated",
+                backend_online: "ONLINE",
+                backend_offline: "OFFLINE",
+                backend_checking: "CHECKING"
+            }
+        };
+
+        function applyLanguage(lang) {
+            const dict = translations[lang] || translations["pt-BR"];
+            window.currentLang = lang;
+            document.querySelectorAll("[data-i18n]").forEach(el => {
+                const key = el.getAttribute("data-i18n");
+                if (dict[key]) el.textContent = dict[key];
+            });
+            const input = document.getElementById("target_input");
+            input.placeholder = (lang === "pt-BR") ? "DOMÍNIO OU IP" : "DOMAIN OR IP";
+        }
+
+        const langToggle = document.getElementById('lang_toggle');
+        const langMenu = document.getElementById('lang_menu');
+        const langLabel = document.getElementById('lang_label');
+        const langFlag = document.getElementById('lang_flag');
+
+        langToggle.addEventListener('click', () => {
+            langMenu.classList.toggle('open');
+        });
+
+        document.querySelectorAll('.lang-item').forEach((item) => {
+            item.addEventListener('click', () => {
+                const lang = item.getAttribute('data-lang');
+                applyLanguage(lang);
+                langLabel.textContent = item.textContent.trim();
+                langFlag.innerHTML = item.querySelector('svg').outerHTML;
+                langMenu.classList.remove('open');
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!langMenu.contains(e.target) && !langToggle.contains(e.target)) {
+                langMenu.classList.remove('open');
+            }
+        });
+
         document.getElementById('target_input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') { executeAnalysis(); }
         });
 
-        function updateEngineLinks(userInput) {
-            const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(userInput);
-            let searchTarget = userInput;
-            if (!isIP && !userInput.toLowerCase().startsWith('www.')) { searchTarget = 'www.' + userInput; }
+        function normalizeTarget(userInput) {
+            let target = (userInput || "").trim();
+            if (target.includes("://")) target = target.split("://")[1];
+            if (target.includes("/")) target = target.split("/")[0];
+            if (target.includes(":")) target = target.split(":")[0];
+            return target;
+        }
 
+        function buildEngineUrl(label, baseUrl, target) {
+            const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(target);
+            let searchTarget = target;
+            if (!isIP && !target.toLowerCase().startsWith('www.')) { searchTarget = 'www.' + target; }
+
+            if (label.includes("OTX")) return baseUrl + (isIP ? "ip/" : "domain/") + searchTarget;
+            if (label.includes("CENSYS")) return (isIP ? "https://platform.censys.io/hosts/" : "https://platform.censys.io/search?q=") + encodeURIComponent(searchTarget);
+            return baseUrl + searchTarget;
+        }
+
+        function updateEngineLinks(userInput) {
+            const normalized = normalizeTarget(userInput);
+            if (!normalized) return;
             document.querySelectorAll('.engine-btn').forEach(btn => {
-                let baseUrl = btn.getAttribute('data-url');
-                let label = btn.innerText;
-                if (label.includes("OTX")) btn.onclick = () => window.open(baseUrl + (isIP ? "ip/" : "domain/") + searchTarget, '_blank');
-                else if (label.includes("CENSYS")) btn.onclick = () => window.open((isIP ? "https://search.censys.io/hosts/" : "https://search.censys.io/search?q=") + searchTarget, '_blank');
-                else btn.onclick = () => window.open(baseUrl + searchTarget, '_blank');
+                const baseUrl = btn.getAttribute('data-url');
+                const label = btn.innerText;
+                btn.dataset.href = buildEngineUrl(label, baseUrl, normalized);
             });
         }
+
+        document.querySelectorAll('.engine-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = normalizeTarget(document.getElementById('target_input').value);
+                if (!target) return;
+                const url = btn.dataset.href || buildEngineUrl(btn.innerText, btn.getAttribute('data-url'), target);
+                window.open(url, '_blank');
+            });
+        });
 
         async function executeAnalysis() {
             const target = document.getElementById('target_input').value.trim();
             if(!target) return;
             updateEngineLinks(target);
+            const analyzeBtn = document.getElementById('analyze_btn');
+            analyzeBtn.classList.add('btn-loading');
             const logs = document.getElementById('terminal_logs');
             logs.innerHTML = `<div>> SURFACE ANALYSIS MONITOR: ${target}</div><div class="animate-pulse">> TELEMETRY SYNCING...</div>`;
+            setEngineStatus('abuseipdb', 'idle');
+            setEngineStatus('virustotal', 'idle');
+            setEngineStatus('otx', 'idle');
 
             try {
                 const response = await fetch(`/api/check?ipAddress=${target}`);
@@ -182,6 +640,9 @@
                 document.getElementById('ui_ip').innerText = data.resolved_ip || target;
                 document.getElementById('ui_isp').innerText = (data.geo.as_name || "N/A").toUpperCase();
                 document.getElementById('ui_country').innerText = countryFullName;
+                document.getElementById('ui_city').innerText = (data.geo.city || "---").toUpperCase();
+                document.getElementById('ui_asn').innerText = (data.geo.asn || data.geo.as_code || "---").toString().toUpperCase();
+                document.getElementById('ui_coords').innerText = (data.geo.loc || "---").toUpperCase();
                 document.getElementById('ui_abuse').innerText = data.recon.abuseipdb.score + "%";
                 document.getElementById('ui_vt').innerText = data.recon.virustotal.hits || 0;
                 document.getElementById('ui_pulses').innerText = data.recon.otx.pulse_count || 0;
@@ -189,6 +650,18 @@
                 const vText = document.getElementById('ui_verdict');
                 vText.innerText = data.verdict;
                 vText.className = `text-4xl font-black uppercase tracking-tighter ${data.verdict === 'CLEAN' ? 'text-clean' : data.verdict === 'SUSPICIOUS' ? 'text-suspicious' : 'text-malicious'}`;
+                const verdictChip = document.getElementById('verdict_chip');
+                verdictChip.textContent = data.verdict;
+                verdictChip.className = `chip mt-1 ${data.verdict === 'CLEAN' ? 'clean' : data.verdict === 'SUSPICIOUS' ? 'suspicious' : 'malicious'}`;
+                const reasonParts = [];
+                if ((data.recon.virustotal.hits || 0) > 0) reasonParts.push(`VT hits: ${data.recon.virustotal.hits}`);
+                if ((data.recon.abuseipdb.score || 0) > 0) reasonParts.push(`Abuse score: ${data.recon.abuseipdb.score}`);
+                if ((data.recon.otx.pulse_count || 0) > 0) reasonParts.push(`OTX pulses: ${data.recon.otx.pulse_count}`);
+                document.getElementById('verdict_reason').innerText = reasonParts.length ? reasonParts.join(" · ") : "No threat indicators found";
+
+                setEngineStatus('abuseipdb', 'on');
+                setEngineStatus('virustotal', 'on');
+                setEngineStatus('otx', 'on');
 
                 if(data.geo.loc && data.geo.loc !== "0,0") {
                     const coords = data.geo.loc.split(',').map(Number);
@@ -208,17 +681,41 @@
                     `).openPopup();
                 }
                 logs.innerHTML = `<div>> MONITORING: ${target}</div><div class="text-green-500">> ZION SUCCESSFULLY COMPLETED THE ANALYSIS :)</div>`;
-            } catch (err) { logs.innerHTML = `<div>> ERROR IN TELEMETRY SYNC.</div>`; }
+            } catch (err) {
+                logs.innerHTML = `<div>> ERROR IN TELEMETRY SYNC.</div>`;
+                setEngineStatus('abuseipdb', 'off');
+                setEngineStatus('virustotal', 'off');
+                setEngineStatus('otx', 'off');
+            } finally {
+                analyzeBtn.classList.remove('btn-loading');
+            }
         }
 
         async function loadFeeds() {
-            const feeds = [{ id: 'feed_thn', url: 'https://feeds.feedburner.com/TheHackersNews' }, { id: 'feed_ciso', url: 'https://www.cisoadvisor.com.br/feed/' }];
+            const feeds = [
+                { id: 'feed_thn', url: 'https://feeds.feedburner.com/TheHackersNews' },
+                { id: 'feed_ciso', url: 'https://www.cisoadvisor.com.br/feed/' },
+                { id: 'feed_isc', url: 'https://isc.sans.edu/rssfeed.xml' },
+                { id: 'feed_msisac', url: 'https://www.cisecurity.org/feed/advisories' },
+                { id: 'feed_msrc', url: 'https://api.msrc.microsoft.com/update-guide/rss' }
+            ];
+            let updated = false;
             for (const f of feeds) {
                 try {
                     const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`);
                     const json = await res.json();
-                    if(json.items) document.getElementById(f.id).innerHTML = json.items.slice(0, 3).map(item => `<a href="${item.link}" target="_blank" class="feed-item">${item.title}</a>`).join('');
+                    if(json.items) {
+                        document.getElementById(f.id).innerHTML = json.items.slice(0, 3).map(item => {
+                            const date = item.pubDate ? new Date(item.pubDate).toLocaleDateString() : "";
+                            return `<a href="${item.link}" target="_blank" class="feed-item"><span class="text-muted">${date}</span> · ${item.title}</a>`;
+                        }).join('');
+                        updated = true;
+                    }
                 } catch(e) { document.getElementById(f.id).innerHTML = "OFFLINE"; }
+            }
+            if (updated) {
+                const updatedEl = document.getElementById('feeds_updated');
+                updatedEl.textContent = new Date().toLocaleString();
             }
         }
 
@@ -230,7 +727,51 @@
             } catch (e) { }
         }
 
-        window.onload = () => { loadFeeds(); syncPhishingData(); setInterval(loadFeeds, 300000); };
+        function setEngineStatus(key, state) {
+            const el = document.getElementById(`status_${key}`);
+            if (!el) return;
+            el.classList.remove('on', 'off', 'idle');
+            el.classList.add(state);
+        }
+
+        async function checkBackend() {
+            const dict = translations[window.currentLang || "pt-BR"] || translations["pt-BR"];
+            const statusEl = document.getElementById('backend_status');
+            const latencyEl = document.getElementById('latency_ms');
+            statusEl.textContent = dict.backend_checking || "CHECKING";
+            statusEl.classList.remove('status-ok', 'status-bad', 'status-warn');
+            statusEl.classList.add('status-warn');
+            latencyEl.textContent = "...";
+            try {
+                const start = performance.now();
+                const res = await fetch('/api/ransomware-stats', { cache: "no-store" });
+                const end = performance.now();
+                latencyEl.textContent = `${Math.round(end - start)} ms`;
+                if (res.ok) {
+                    statusEl.textContent = dict.backend_online || "ONLINE";
+                    statusEl.classList.remove('status-warn', 'status-bad');
+                    statusEl.classList.add('status-ok');
+                } else {
+                    statusEl.textContent = dict.backend_offline || "OFFLINE";
+                    statusEl.classList.remove('status-warn', 'status-ok');
+                    statusEl.classList.add('status-bad');
+                }
+            } catch (e) {
+                latencyEl.textContent = "N/A";
+                statusEl.textContent = dict.backend_offline || "OFFLINE";
+                statusEl.classList.remove('status-warn', 'status-ok');
+                statusEl.classList.add('status-bad');
+            }
+        }
+
+        window.onload = () => {
+            applyLanguage("pt-BR");
+            loadFeeds();
+            syncPhishingData();
+            checkBackend();
+            setInterval(loadFeeds, 300000);
+            setInterval(checkBackend, 60000);
+        };
     </script>
 </body>
 </html>

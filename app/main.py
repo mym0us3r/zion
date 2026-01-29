@@ -2,6 +2,9 @@ import os
 import sys
 import uvicorn
 import logging
+import ipaddress
+from urllib.parse import urlparse
+import httpx
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -57,6 +60,76 @@ async def get_phishing_stats():
         }
     except Exception:
         return {"top_ips": ["OFFLINE"], "top_hosts": ["OFFLINE"]}
+
+def _normalize_target(raw_target: str) -> str:
+    target = (raw_target or "").strip()
+    if "://" in target:
+        parsed = urlparse(target)
+        target = parsed.netloc or parsed.path
+    if "/" in target:
+        target = target.split("/")[0]
+    if ":" in target:
+        target = target.split(":")[0]
+    return target
+
+def _is_ip(value: str) -> bool:
+    try:
+        ipaddress.ip_address(value)
+        return True
+    except ValueError:
+        return False
+
+@app.get("/api/rdap")
+async def rdap_lookup(target: str = Query(...)):
+    normalized = _normalize_target(target)
+    if not normalized:
+        return {"error": "invalid_target"}
+
+    query_type = "ip" if _is_ip(normalized) else "domain"
+    rdap_url = f"https://rdap.org/{query_type}/{normalized}"
+
+    try:
+        async with httpx.AsyncClient(timeout=6.0) as client:
+            response = await client.get(rdap_url, headers={"accept": "application/json"})
+            response.raise_for_status()
+            data = response.json()
+    except Exception as e:
+        logger.error(f"RDAP lookup failed: {e}")
+        return {"error": "rdap_lookup_failed", "query": normalized, "type": query_type}
+
+    summary = {
+        "name": data.get("name"),
+        "handle": data.get("handle"),
+        "country": data.get("country"),
+        "status": data.get("status"),
+        "startAddress": data.get("startAddress"),
+        "endAddress": data.get("endAddress"),
+        "ldhName": data.get("ldhName"),
+        "entities": []
+    }
+
+    for ent in data.get("entities", []):
+        roles = ent.get("roles") or []
+        vcard = ent.get("vcardArray")
+        org = None
+        if vcard and isinstance(vcard, list) and len(vcard) > 1:
+            for item in vcard[1]:
+                if item and item[0] == "fn":
+                    org = item[3]
+                    break
+        summary["entities"].append({
+            "handle": ent.get("handle"),
+            "roles": roles,
+            "name": org
+        })
+
+    return {
+        "query": normalized,
+        "type": query_type,
+        "source": "rdap.org",
+        "summary": summary,
+        "raw": data
+    }
 
 if __name__ == "__main__":
     logger.info("ZION SYSTEM STARTING ON PORT 8080")
