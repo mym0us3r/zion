@@ -9,6 +9,7 @@ class Config:
     VT_API = os.getenv("VT_API", "")
     ABUSE_API = os.getenv("ABUSE_API", "")
     OTX_API = os.getenv("OTX_API", "")
+    CENSYS_API_TOKEN = os.getenv("CENSYS_API_TOKEN", "")
     # Nova entrada para IPinfo
     IPINFO_TOKEN = os.getenv("IPINFO_TOKEN", "")
 
@@ -20,6 +21,7 @@ class Config:
             "VT_API", 
             "ABUSE_API", 
             "OTX_API", 
+            "CENSYS_API_TOKEN",
             "IPINFO_TOKEN"
         ]
 

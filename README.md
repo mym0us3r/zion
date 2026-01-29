@@ -1,4 +1,4 @@
-# ZION - External Attack Surface Monitor v1.0
+# ZION - External Attack Surface Monitor v1.1
 
 ### ZION is a reconnaissance and monitoring tool designed for SOC Analysts and Blue Teams. It consolidates intelligence from multiple high-fidelity threat sources and delivers a unified risk verdict for digital assets, removing the need for fragmented manual analysis.
 
@@ -9,6 +9,17 @@
 > There is no anonymity on the attack surface. Only delays :)
 
 **ZION** is a robust **External Attack Surface Management (EASM)** platform that consolidates intelligence from multiple sources to provide a real-time, panoramic view of digital assets and global threats.
+
+## v1.1 Release Highlights
+
+- **UI enhancement**: refined spacing, typography, contrast, and card hierarchy for a more professional and readable dashboard.
+- **Language selector** (PT-BR / EN-CA) with SVG flags.
+- **Operational visibility**: backend status + latency and feed last-updated timestamp in the header.
+- **Engine health indicators**: per‑engine status dots (on/off/idle) for quick signal health checks.
+- **Threat verdict clarity**: reason string shows which signals triggered the verdict (VT hits, Abuse score, OTX pulses).
+- **Identity details expanded**: City, ASN, and Coords displayed alongside IP/Org/Country.
+- **Security feeds expanded**: added SANS ISC, MS‑ISAC, and Microsoft SUG on top of The Hacker News + CISO Advisor Brazil.
+- **Dependencies**: added `httpx` for async HTTP calls.
 
 ## Interface & Case Studies
 
@@ -67,13 +78,18 @@ This case study showcases the dashboard's ability to identify a high-risk networ
   Real-time RSS feed consumption from:
   - The Hacker News
   - CISO Advisor Brazil
+  - SANS ISC Diary
+  - MS-ISAC Advisories
+  - Microsoft Security Update Guide (SUG)
 
 ### Threat Telemetry Dashboard
 Centralized interface displaying:
 * **Identity Details**: Organization/ISP, IP, and location via IPInfo.
+  - Additional fields: City, ASN, Coords.
 * **Threat Scores**: Aggregated AbuseIPDB (Score %) and VirusTotal (Hits).
 * **OTX Pulses**: Triple sum of IoCs via AlienVault.
 * **Final Verdict**: Intelligent decision algorithm (Clean, Suspicious, Malicious).
+  - **Reason**: displayed per signal (VT hits, Abuse score, OTX pulses).
 
 ### Ransomware Live Monitor
 Native integration with Ransomware Live tracking:
@@ -146,6 +162,7 @@ VT_API=your_virustotal_key
 ABUSE_API=your_abuseipdb_key
 OTX_API=your_otx_alienvault_key
 IPINFO_TOKEN=your_ipinfo_token
+CENSYS_API_TOKEN=your_censys_api_token
 
 ```
 
