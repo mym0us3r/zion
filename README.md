@@ -75,6 +75,9 @@ Centralized interface displaying:
 * **OTX Pulses**: Triple sum of IoCs via AlienVault.
 * **Final Verdict**: Intelligent decision algorithm (Clean, Suspicious, Malicious).
 
+> [!WARNING]
+> **Known limitations (v1.x):** an engine that is not configured, times out or returns an error contributes 0 to the verdict, so a **CLEAN** result does not confirm that every engine was queried. Confirm the result through the engine links on the dashboard. The PhishStats panel has no live data source in v1.x and is shown as OFFLINE.
+
 ### Ransomware Live Monitor
 Native integration with Ransomware Live tracking:
 * Number of active ransomware groups.
@@ -114,9 +117,9 @@ ZION bridges the gap between Web UI limitations and raw API intelligence. It fre
 
 - **Clone the repository**
 
-`mkdir -p /opt/ZION ; cd /opt/ZION`
+`git clone https://github.com/mym0us3r/zion.git /opt/ZION`
 
-`git clone https://github.com/mym0us3r/zion.git`
+`cd /opt/ZION`
 
 
 - **Create and activate virtual environment**
@@ -197,7 +200,7 @@ After=network.target
 User=root
 Group=root
 WorkingDirectory=/opt/ZION/app
-ExecStart=/opt/ZION/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+ExecStart=/opt/ZION/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8080
 Restart=always
 RestartSec=5
 
@@ -280,3 +283,6 @@ The core mission is to replace repetitive, manual lookups with **instant, high-f
 
 > [!IMPORTANT]
 > This tool is intended strictly for **educational and defensive security purposes**. Always ensure you have proper authorization before analyzing third-party assets.
+
+> [!NOTE]
+> **Project status:** ZION v1 will not receive further updates or revisions. Development is focused on ZION v2. Everyone is welcome to download, modify and adapt ZION v1 to their needs under the terms of the GPLv3 license.
