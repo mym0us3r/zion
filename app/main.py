@@ -51,10 +51,7 @@ async def get_phishing_stats():
                 "top_ips": stats["top_ips"],
                 "top_hosts": stats["top_hosts"]
             }
-        return {
-            "top_ips": ["186.225.21.10", "177.105.14.2", "191.243.55.8", "201.48.11.90"],
-            "top_hosts": ["TELEFONICA-BR", "CLARO-BR", "INTERNET-PF", "ALGAR-BR"]
-        }
+           return {"top_ips": ["OFFLINE"], "top_hosts": ["OFFLINE"]}
     except Exception:
         return {"top_ips": ["OFFLINE"], "top_hosts": ["OFFLINE"]}
 
