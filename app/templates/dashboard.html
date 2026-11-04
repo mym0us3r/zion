@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>ZION - EXTERNAL ATTACK SURFACE v1.0</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #00050a; color: #00f2ff; font-family: 'Courier New', monospace; margin: 0; padding: 10px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        .zion-card { background: #010c17; border: 1px solid #061f3d; display: flex; flex-direction: column; min-height: 0; }
+        .panel-header { font-size: 10px; color: #3b82f6; font-weight: bold; border-bottom: 1px solid #061f3d; padding: 4px 10px; background: rgba(6, 31, 61, 0.3); text-transform: uppercase; }
+
+        .feed-container { overflow: hidden; flex-grow: 1; }
+        .feed-item { display: block; font-size: 10px; color: #00ff88; margin-bottom: 8px; text-decoration: none; line-height: 1.3; }
+        .feed-item::before { content: "▪ "; color: #3b82f6; }
+        .feed-item:hover { color: #fff; text-shadow: 0 0 5px #00f2ff; }
+
+        #map { flex-grow: 1; background: #000b1a; border: 1px solid #061f3d; width: 100%; height: 100%; }
+
+        .leaflet-popup-content-wrapper { background: #010c17 !important; color: #00f2ff !important; border: 1px solid #00f2ff !important; border-radius: 0px !important; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        .leaflet-popup-tip { background: #00f2ff !important; }
+        .popup-label { color: #3b82f6; font-weight: bold; text-transform: uppercase; margin-right: 5px; }
+        .popup-value { color: #ffffff; font-weight: bold; }
+
+        .terminal-container { position: relative; height: 110px; background: #000; border-top: 1px solid #061f3d; padding: 10px; }
+        #terminal_logs { font-size: 11px; color: #00ff00; }
+        .terminal-motto { position: absolute; bottom: 10px; width: 100%; text-align: center; color: rgba(255,255,255,0.9); font-size: 14px; font-weight: bold; letter-spacing: 1px; pointer-events: none; }
+
+        .engine-btn { width: 100%; text-align: left; padding: 4px 8px; border: 1px solid #061f3d; font-size: 9px; margin-bottom: 2px; color: #00f2ff; text-transform: uppercase; background: rgba(0,242,255,0.02); cursor: pointer; }
+        .engine-btn:hover { background: rgba(0,242,255,0.1); border-color: #00f2ff; }
+        .text-clean { color: #22c55e !important; }
+        .text-suspicious { color: #f97316 !important; }
+        .text-malicious { color: #ef4444 !important; }
+        .link-header { cursor: pointer; transition: color 0.2s; }
+        .link-header:hover { color: #00f2ff !important; }
+    </style>
+</head>
+<body>
+
+    <header class="flex flex-col items-center mb-2 shrink-0">
+        <h1 class="text-lg font-bold tracking-[0.6em] text-white uppercase">Zion - External Attack Surface Monitor</h1>
+        <div class="flex gap-2 mt-1">
+            <input type="text" id="target_input" placeholder="DOMAIN OR IP" class="bg-black border border-[#061f3d] px-4 py-1 w-[350px] text-[#00f2ff] text-center outline-none font-bold focus:border-cyan-400">
+            <button onclick="executeAnalysis()" class="bg-[#00f2ff] text-black font-black px-6 py-1 uppercase text-xs hover:bg-white transition-all">Analyze</button>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-12 gap-2 flex-grow min-h-0">
+        <div class="col-span-2 flex flex-col gap-2 min-h-0">
+            <div class="zion-card">
+                <div class="panel-header">External Engines</div>
+                <div class="p-2" id="engine_list">
+                    <button class="engine-btn" data-url="https://www.abuseipdb.com/check/">1. ABUSEIPDB ➔</button>
+                    <button class="engine-btn" data-url="https://www.virustotal.com/gui/search/">2. VIRUSTOTAL ➔</button>
+                    <button class="engine-btn" data-url="https://otx.alienvault.com/indicator/">3. OTX ALIENVAULT ➔</button>
+                    <button class="engine-btn" data-url="https://www.shodan.io/search?query=">4. SHODAN ➔</button>
+                    <button class="engine-btn" data-url="https://search.censys.io/">5. CENSYS ➔</button>
+                </div>
+            </div>
+
+            <div class="zion-card flex-grow overflow-hidden">
+                <div class="panel-header">Security Feeds (Live)</div>
+                <div class="p-2 flex flex-col justify-between flex-grow overflow-hidden">
+                    <div class="flex flex-col flex-grow mb-2">
+                        <p class="text-[9px] text-blue-500 font-bold uppercase mb-2 border-b border-blue-900/40">The Hacker News</p>
+                        <div id="feed_thn" class="feed-container"></div>
+                    </div>
+                    <div class="flex flex-col flex-grow">
+                        <p class="text-[9px] text-blue-500 font-bold uppercase mb-2 border-b border-blue-900/40">CISO Advisor Brazil</p>
+                        <div id="feed_ciso" class="feed-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="zion-card p-2 border !border-purple-900 bg-[#0a0014] shrink-0">
+                <div class="panel-header !bg-transparent !border-none !p-0 !text-purple-400 mb-1">
+                    <a href="https://www.ransomware.live/stats" target="_blank" class="link-header">Ransomware Monitor ➔</a>
+                </div>
+                <div class="grid grid-cols-3 gap-1 text-center font-bold">
+                    <div><p class="text-[7px] text-gray-500 uppercase">Groups</p><p id="rans_groups" class="text-[9px] text-green-400">313</p></div>
+                    <div><p class="text-[7px] text-gray-500 uppercase">2026</p><p id="rans_year" class="text-[9px] text-orange-400">481</p></div>
+                    <div><p class="text-[7px] text-gray-500 uppercase">Total</p><p id="rans_total" class="text-[9px] text-red-500">25.126</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-7 flex flex-col gap-2 min-h-0">
+            <div class="flex-grow zion-card"><div id="map"></div></div>
+            <div class="zion-card shrink-0">
+                <div class="panel-header">Terminal Search</div>
+                <div class="terminal-container">
+                    <div id="terminal_logs">> ZION - External Attack Surface Monitor by m0us3r.</div>
+                    <div class="terminal-motto">THERE IS NO ANONYMITY ON THE ATTACK SURFACE, ONLY DELAYS!</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-3 flex flex-col gap-2 min-h-0">
+            <div class="zion-card p-2 shrink-0">
+                <div class="panel-header mb-1">Identity Details (IPINFO)</div>
+                <div class="bg-black/40 p-2 border border-[#061f3d]">
+                    <p class="text-[7px] text-blue-500 uppercase font-bold">Organization</p>
+                    <p id="ui_isp" class="text-[10px] text-white font-bold truncate uppercase">---</p>
+                    <div class="grid grid-cols-2 gap-2 mt-1">
+                        <div><p class="text-[7px] text-blue-500 uppercase font-bold">IP (INTEL)</p><p id="ui_ip" class="text-[10px] text-cyan-400 font-bold">---</p></div>
+                        <div><p class="text-[7px] text-blue-500 uppercase font-bold">Country</p><p id="ui_country" class="text-[10px] text-white font-bold uppercase">---</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="zion-card flex-grow flex flex-col">
+                <div class="panel-header">Threat Telemetry</div>
+                <div class="flex flex-col flex-grow">
+                    <div class="grid grid-cols-2 border-b border-[#061f3d]/50 flex-grow text-center items-center">
+                        <div><p id="ui_abuse" class="text-3xl font-black">0%</p><p class="text-[8px] text-blue-500">Abuse Score</p></div>
+                        <div><p id="ui_vt" class="text-3xl font-black">0</p><p class="text-[8px] text-blue-500">VT Hits</p></div>
+                    </div>
+                    <div class="flex flex-col items-center justify-center flex-grow">
+                        <p id="ui_pulses" class="text-6xl font-black text-white">0</p>
+                        <p class="text-[8px] text-blue-500 uppercase">OTX Pulses (DOM+WWW+IP)</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center flex-grow bg-black/40 border-t border-[#061f3d]">
+                        <p id="ui_verdict" class="text-4xl font-black uppercase tracking-tighter">---</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="zion-card p-2 border !border-red-900 bg-[#0d0000] shrink-0 min-h-[140px]">
+                <div class="panel-header !text-red-500 !bg-transparent !border-none !p-0 mb-1">
+                    <a href="https://phishstats.info/search" target="_blank" class="link-header">Phishing BR Monitor ➔</a>
+                </div>
+                <div id="phish_content" class="text-[8px] space-y-1 font-mono"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var map = L.map('map', { center: [-15.79, -47.88], zoom: 3, attributionControl: false, zoomControl: false });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+        var marker;
+
+        const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+        function getFullCountry(code) {
+            if (!code || code === "---") return "UNKNOWN";
+            try { return regionNames.of(code.toUpperCase()).toUpperCase(); } catch (e) { return code.toUpperCase(); }
+        }
+
+        document.getElementById('target_input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { executeAnalysis(); }
+        });
+
+        function updateEngineLinks(userInput) {
+            const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(userInput);
+            let searchTarget = userInput;
+            if (!isIP && !userInput.toLowerCase().startsWith('www.')) { searchTarget = 'www.' + userInput; }
+
+            document.querySelectorAll('.engine-btn').forEach(btn => {
+                let baseUrl = btn.getAttribute('data-url');
+                let label = btn.innerText;
+                if (label.includes("OTX")) btn.onclick = () => window.open(baseUrl + (isIP ? "ip/" : "domain/") + searchTarget, '_blank');
+                else if (label.includes("CENSYS")) btn.onclick = () => window.open((isIP ? "https://search.censys.io/hosts/" : "https://search.censys.io/search?q=") + searchTarget, '_blank');
+                else btn.onclick = () => window.open(baseUrl + searchTarget, '_blank');
+            });
+        }
+
+        async function executeAnalysis() {
+            const target = document.getElementById('target_input').value.trim();
+            if(!target) return;
+            updateEngineLinks(target);
+            const logs = document.getElementById('terminal_logs');
+            logs.innerHTML = `<div>> SURFACE ANALYSIS MONITOR: ${target}</div><div class="animate-pulse">> TELEMETRY SYNCING...</div>`;
+
+            try {
+                const response = await fetch(`/api/check?ipAddress=${target}`);
+                const data = await response.json();
+
+                const rawCountry = data.geo.country || data.geo.country_code || "---";
+                const countryFullName = getFullCountry(rawCountry);
+                const asNumber = data.geo.as_code || data.geo.asn || "---";
+
+                document.getElementById('ui_ip').innerText = data.resolved_ip || target;
+                document.getElementById('ui_isp').innerText = (data.geo.as_name || "N/A").toUpperCase();
+                document.getElementById('ui_country').innerText = countryFullName;
+                document.getElementById('ui_abuse').innerText = data.recon.abuseipdb.score + "%";
+                document.getElementById('ui_vt').innerText = data.recon.virustotal.hits || 0;
+                document.getElementById('ui_pulses').innerText = data.recon.otx.pulse_count || 0;
+
+                const vText = document.getElementById('ui_verdict');
+                vText.innerText = data.verdict;
+                vText.className = `text-4xl font-black uppercase tracking-tighter ${data.verdict === 'CLEAN' ? 'text-clean' : data.verdict === 'SUSPICIOUS' ? 'text-suspicious' : 'text-malicious'}`;
+
+                if(data.geo.loc && data.geo.loc !== "0,0") {
+                    const coords = data.geo.loc.split(',').map(Number);
+                    map.flyTo(coords, 10);
+                    if(marker) map.removeLayer(marker);
+
+                    marker = L.marker(coords).addTo(map).bindPopup(`
+                        <div style="font-size:11px; line-height:1.5; min-width:210px;">
+                            <div style="border-bottom:1px solid #061f3d; margin-bottom:5px; padding-bottom:3px;">
+                                <span class="popup-label">MONITORING:</span> <span class="popup-value" style="color:#00f2ff;">${target}</span>
+                            </div>
+                            <span class="popup-label">IP:</span> <span class="popup-value">${data.resolved_ip}</span><br>
+                            <span class="popup-label">ISP/ORG:</span> <span class="popup-value">${data.geo.as_name || 'N/A'}</span><br>
+                            <span class="popup-label">ASN:</span> <span class="popup-value">${asNumber}</span><br>
+                            <span class="popup-label">COUNTRY:</span> <span class="popup-value">${countryFullName}</span>
+                        </div>
+                    `).openPopup();
+                }
+                logs.innerHTML = `<div>> MONITORING: ${target}</div><div class="text-green-500">> ZION SUCCESSFULLY COMPLETED THE ANALYSIS :)</div>`;
+            } catch (err) { logs.innerHTML = `<div>> ERROR IN TELEMETRY SYNC.</div>`; }
+        }
+
+        async function loadFeeds() {
+            const feeds = [{ id: 'feed_thn', url: 'https://feeds.feedburner.com/TheHackersNews' }, { id: 'feed_ciso', url: 'https://www.cisoadvisor.com.br/feed/' }];
+            for (const f of feeds) {
+                try {
+                    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`);
+                    const json = await res.json();
+                    if(json.items) document.getElementById(f.id).innerHTML = json.items.slice(0, 3).map(item => `<a href="${item.link}" target="_blank" class="feed-item">${item.title}</a>`).join('');
+                } catch(e) { document.getElementById(f.id).innerHTML = "OFFLINE"; }
+            }
+        }
+
+        async function syncPhishingData() {
+            try {
+                const res = await fetch('/api/phishing-stats');
+                const data = await res.json();
+                document.getElementById('phish_content').innerHTML = data.top_ips.slice(0, 5).map((ip, i) => `<div class="flex justify-between border-b border-red-900/20 py-1"><span class="text-gray-400">${ip}</span><span class="text-red-500 truncate ml-2 font-bold">${(data.top_hosts[i] || "N/A").toUpperCase()}</span></div>`).join('');
+            } catch (e) { }
+        }
+
+        window.onload = () => { loadFeeds(); syncPhishingData(); setInterval(loadFeeds, 300000); };
+    </script>
+</body>
+</html>
